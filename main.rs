@@ -6,14 +6,25 @@ fn main() {
     let args: Vec<String> = env::args().collect(); //SE obtienen los parametro
     
     //Acá se salvan los que son solo parametros de prog
-    let mut arguments = Vec::<String>::new();
-    let mut control = 0;
+    let mut arguments_for_one = Vec::<String>::new();
+    let mut control_one = 0;
+    let mut control_two = 0;
+
+    let mut arguments_for_two = Vec::<String>::new();
 
     for elm in args{
-        if control > 3{
-            arguments.push(elm)
+        if control_one > 3{
+            arguments_for_one.push(elm);
         }
-        control = control +1
+        control_one = control_one +1
+    }
+    let args: Vec<String> = env::args().collect(); //SE obtienen los parametro
+
+    for elm in args{
+        if control_two > 3{
+            arguments_for_one.push(elm);
+        }
+        control_two = control_two +1
     }
 
     let args: Vec<String> = env::args().collect();//Se recuperan los parametros
@@ -27,10 +38,10 @@ fn main() {
     if program == "rastreador"{
         if option == "-v" || option == "-V"{
             if option == "-v"{
-               read_syscalls(&program_name, arguments);//Opcion que muestra los syscalls de golpe
+                read_syscalls_with_table(&program_name, arguments_for_one);//Opcion que muestra los syscalls de golpe
             }
             if option == "-V" {
-                println!("opcion 2");
+                read_syscalls_with_control(&program_name, arguments_for_two)
             }
         } else {
             println!("Error en las opcioones");
@@ -43,7 +54,7 @@ fn main() {
 }
 
 //Lee los syscalls, recibe el nombre del programa y los argumentos, imprime los syscalls utilizados
-fn read_syscalls(program:&str, arguments:Vec<String>){
+fn read_syscalls_with_table(program:&str, arguments:Vec<String>){
     let mut tracer;
     if arguments.len() == 0{
         tracer = HStraceBuilder::new().program(program).build();//Si no tiene argumentos no los configura
@@ -97,4 +108,26 @@ fn print_table_array(vector: &mut Vec<(String, i32)>) {
     for i in vector{
         println!("SYSCALL: {:?} NUMBER OF TIMES: {}", i.0, i.1)
     }
+}
+
+//Lee los syscalls, recibe el nombre del programa y los argumentos, imprime los syscalls utilizados con una tecla controlada
+fn read_syscalls_with_control(program:&str, arguments:Vec<String>){
+    let mut tracer;
+    if arguments.len() == 0{
+        tracer = HStraceBuilder::new().program(program).build();//Si no tiene argumentos no los configura
+    }else {
+        tracer = HStraceBuilder::new().program(program).args(arguments).build();
+    }
+
+    tracer.start().unwrap();//Inicia el tracer
+    let mut syscalls = Vec::<String>::new();
+   
+    for syscall in tracer.iter_as_syscall() {
+        println!("{:?}",syscall);
+        let mut line = String::new();
+        println!("Press B to continue!");
+        let b1 = std::io::stdin().read_line(&mut line).unwrap();
+    }
+
+
 }
