@@ -1,0 +1,12 @@
+/home/bryan/Desktop/Tarea #3/client/target/debug/deps/httparse-4b95f643148764ae.rmeta: /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/lib.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/iter.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/macros.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/simd/mod.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/simd/sse42.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/simd/avx2.rs
+
+/home/bryan/Desktop/Tarea #3/client/target/debug/deps/libhttparse-4b95f643148764ae.rlib: /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/lib.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/iter.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/macros.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/simd/mod.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/simd/sse42.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/simd/avx2.rs
+
+/home/bryan/Desktop/Tarea #3/client/target/debug/deps/httparse-4b95f643148764ae.d: /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/lib.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/iter.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/macros.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/simd/mod.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/simd/sse42.rs /home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/simd/avx2.rs
+
+/home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/lib.rs:
+/home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/iter.rs:
+/home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/macros.rs:
+/home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/simd/mod.rs:
+/home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/simd/sse42.rs:
+/home/bryan/.cargo/registry/src/github.com-1ecc6299db9ec823/httparse-1.7.0/src/simd/avx2.rs:
