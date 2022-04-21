@@ -3,13 +3,15 @@ pub type GenericError = Box<dyn std::error::Error + Send + Sync>;
 pub type GenericResult<T> = std::result::Result<T, GenericError>;
 use hyper::body;
 use std::env;
+use std::fs;
 
-pub async fn get(url:&str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+
+async fn get(url:&str, filename: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let request = Request::builder()
         .method(Method::GET)
         .uri(url)
         .header("accept", "application/json")
-        .body(Body::empty()).unwrap();
+        .body(Body::from(filename.to_string())).unwrap();
     let client = Client::new();
     let resp = client.request(request).await.unwrap();
     println!("Response GET: {}", resp.status());
@@ -19,13 +21,15 @@ pub async fn get(url:&str) -> Result<(), Box<dyn std::error::Error + Send + Sync
 }
 
 async fn post(url: &str, message: &str) ->  Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let data = fs::read_to_string(message).expect("Unable to read file");
+
 
     let request = Request::builder()
         .method(Method::POST)
         .uri(url)
         .header("accept", "application/json")
         .header("Content-type", "application/json; charset=UTF-8")
-        .body(Body::from(message.to_string())).unwrap();
+        .body(Body::from(data)).unwrap();
     let client = Client::new();
     let resp = client.request(request).await.unwrap();
     let bytes = body::to_bytes(resp.into_body()).await.unwrap();
@@ -38,7 +42,6 @@ async fn post(url: &str, message: &str) ->  Result<(), Box<dyn std::error::Error
 #[tokio::main]
 async fn main() ->  Result<(), Box<dyn std::error::Error + Send + Sync>> { 
     let args: Vec<String> = env::args().collect();
-    println!("{:?}", args);
     let choice = &args[2];
     let host = &args[1];
     let arguments;
@@ -53,7 +56,7 @@ async fn main() ->  Result<(), Box<dyn std::error::Error + Send + Sync>> {
     if choice == post_method {
         post(host, arguments).await;
     } else if choice == get_method {
-        get(host).await;
+        get(host,arguments).await;
     }
 
     Ok(())

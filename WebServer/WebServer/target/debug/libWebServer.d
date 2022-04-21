@@ -1,1 +1,1 @@
-/home/bryan/Desktop/Tarea\ #3/WebServer/target/debug/libWebServer.rlib: /home/bryan/Desktop/Tarea\ #3/WebServer/src/lib.rs
+/home/bryan/rust/WebServer/WebServer/target/debug/libWebServer.rlib: /home/bryan/rust/WebServer/WebServer/src/lib.rs
