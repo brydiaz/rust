@@ -1,3 +1,4 @@
-pub fn test() {
-    print!("Hello World4");
+
+pub fn mount() {
+
 }
