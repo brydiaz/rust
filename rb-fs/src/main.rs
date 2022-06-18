@@ -1,6 +1,5 @@
 mod mkfs;
-//mod fsck;
-mod mount;
+
 use std::env;
 use std::ffi::OsStr;
 
@@ -15,7 +14,7 @@ fn main() {
     };
     let fs = mkfs::Rb_fs::new(mountpoint.clone());
 
-    let options = ["-ro", "nonempty"]
+    let options = ["-o", "nonempty"]
         .iter()
         .map(|o| o.as_ref())
         .collect::<Vec<&OsStr>>();

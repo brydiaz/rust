@@ -3,7 +3,7 @@ use libc::{ENOSYS, ENOENT, EIO, EISDIR, ENOSPC};
 use std::ffi::OsStr;
 use std::mem;
 
-//CODIGO DEL DISCO DE PERSISTENCIA
+//---------------------------------------CODIGO DEL ALMACENAJE DE NUESTRO FS---------------------------------------
 //LLevaremos un control de los inodes 
 static mut NEXT_INO: u64 = 1;
 
@@ -165,15 +165,16 @@ impl Disk {
         return None;
         
     }
-   
+    //Agrega data al bloque de memoria asociado al ino
     pub fn add_data_to_inode(&mut self, ino:u64,data:u8) {
         for i in 0..self.memory_block.len() {
             if self.memory_block[i].ino_ref == ino {
-                print!("si existe");
                 self.memory_block[i].add_data(data) ;
             }
         }
     }
+
+    //Elimina la data el bloque de memoria asociado al ino
     pub fn delete_data_to_inode(&mut self, ino:u64,data: u8) {
         for i in 0..self.memory_block.len() {
             if self.memory_block[i].ino_ref == ino {
@@ -181,6 +182,8 @@ impl Disk {
             }
         }
     }
+
+    //Escribe un arreglo de bites dentro de un inode 
     pub fn write_content(&mut self, ino_ref: u64, content: Vec<u8>) {
         for i in 0..content.len(){
             self.add_data_to_inode(ino_ref, content[i]);
@@ -188,7 +191,8 @@ impl Disk {
         }
     }
 
-    pub fn get_content_as_bytes(&self, ino: u64) -> Option<&[u8]> {
+    //Obtiene el contenido de un arreglo 
+    pub fn get_bytes_content(&self, ino: u64) -> Option<&[u8]> {
         for i in 0..self.memory_block.len() {
             if self.memory_block[i].ino_ref == ino {
                 let bytes = &self.memory_block[i].data[..];
@@ -201,7 +205,9 @@ impl Disk {
 
 
 
-//ACA INICIA EL CODIGO DEL FILESYSTEM
+//-----------------------------------------ACA INICIA EL CODIGO DEL FILESYSTEM-------------------------------------
+
+
 //Nuestro fs tiene un disco
 pub struct Rb_fs {
     disk : Disk
@@ -217,20 +223,24 @@ impl Rb_fs {
 
 
 impl Filesystem for Rb_fs {
+
+    //Mira dentro de un directorio por su nombre y obtiene sus atributos
     fn lookup(&mut self, _req: &Request, parent: u64, name: &OsStr, reply: ReplyEntry) {
+
         let fila_name = name.to_str().unwrap();
         let inode = self.disk.find_inode_in_references_by_name(parent, fila_name);
         match inode {
             Some(inode) => {
                 let ttl = time::now().to_timespec();
-                print!("lookup\n");
                 reply.entry(&ttl, &inode.attributes, 0);
+                println!("----RB-FS: LOOKUP----");
             },
             None => {
                 reply.error(ENOENT);
             }
         }
     }
+    //Crea un archivo en la padre pasado poor parametro
     fn create(&mut self, _req: &Request, parent: u64, name: &OsStr, mode: u32, flags: u32, reply: ReplyCreate) {
 
         let ino_available = self.disk.new_ino();
@@ -272,9 +282,12 @@ impl Filesystem for Rb_fs {
         
         self.disk.add_reference(parent, ino_available as usize);
         self.disk.memory_block.push(mem_block);
+        println!("----RB-FS: CREATED----");
+
         reply.created(&ts, &attr, 1, ino_available, flags)
     }
 
+    //Escribe dentro de un archivo en base al ino pasado
     fn write(&mut self, _req: &Request, ino: u64, _fh: u64, offset: i64, data: &[u8], _flags: u32, reply: ReplyWrite) {
 
         let inode = self.disk.get_mut_inode(ino);
@@ -282,10 +295,10 @@ impl Filesystem for Rb_fs {
         
         match inode {
             Some(inode) => {
-                print!("{:?}", content.clone());
-
                 inode.attributes.size = data.len() as u64;
                 self.disk.write_content(ino, content);
+                println!("----RB-FS: WRITE----");
+
                 reply.written(data.len() as u32);
             },
             None => {
@@ -293,33 +306,38 @@ impl Filesystem for Rb_fs {
             }
         }    
     }
-
+    //Busca el bloque de memoria asignado al ino y muestra su contenido 
     fn read(&mut self, _req: &Request, ino: u64, fh: u64, offset: i64, size: u32, reply: ReplyData) {
-        let memory_block = self.disk.get_content_as_bytes(ino);
+        let memory_block = self.disk.get_bytes_content(ino);
         match memory_block {
-            Some(memory_block) => {reply.data(memory_block)},
+            Some(memory_block) => {reply.data(memory_block);
+                println!("----RB-FS: READ----");
+
+            },
             None => {reply.error(EIO);}
         }
     }
-    
+    //Busca el inode asignado al ino y devuelve sus atributos
     fn getattr(&mut self,_req: &Request, ino: u64, reply: ReplyAttr) {
         let inode = self.disk.get_inode(ino);
         match inode {
             Some(inode) => {
                 let ttl = time::now().to_timespec();
-                print!("get\n");
+                println!("----RB-FS: GETATTR----");
+
                 reply.attr(&ttl, &inode.attributes);
             },
             None => reply.error(ENOENT)
         }
     }
-
+    //Literalmente, lee un directorio
     fn readdir(&mut self, _req: &Request, ino: u64, fh: u64, offset: i64, mut reply: ReplyDirectory) {
+        println!("----RB-FS: READDIR----");
+
         if ino == 1 {
             if offset == 0 {
                 reply.add(1, 0, FileType::Directory, ".");
                 reply.add(1, 1, FileType::Directory, "..");
-                print!("readdir\n");
 
             }
         }
@@ -333,8 +351,7 @@ impl Filesystem for Rb_fs {
         match inode {
             Some(inode) => {
                 let references = &inode.references;
-                // Percorre pelo vetor de referências do Inode pai. Cada posição indica um arquivo que está presente
-                // no diretório.
+
                 for ino in references {
 
                     if let ino = ino {
@@ -347,8 +364,6 @@ impl Filesystem for Rb_fs {
 
                             let name = &inode_data.name;
                             let offset = mem::size_of_val(&inode) as i64;
-                            print!("readdir2\n");
-
                             reply.add(inode_data.attributes.ino, offset, inode_data.attributes.kind, name);
                         }
                     }
@@ -360,7 +375,10 @@ impl Filesystem for Rb_fs {
         }
     }
 
+    //Crea un directorio y asigna un nuevo ino
     fn mkdir(&mut self, _req: &Request, parent: u64, name: &OsStr, _mode: u32, reply: ReplyEntry) {
+        println!("----RB-FS: MKDIR----");
+
         let ino = self.disk.new_ino(); 
         let ts = time::now().to_timespec();
         let attr = FileAttr {
@@ -394,8 +412,10 @@ impl Filesystem for Rb_fs {
 
         reply.entry(&ts, &attr, 0);
     }
+    //Elimina un directorio en base al nombre
     fn rmdir(&mut self,_req: &Request, parent: u64, name: &OsStr, reply: ReplyEmpty) {
-        
+        println!("----RB-FS: RMDIR----");
+
         let name = name.to_str().unwrap();
         let inode = self.disk.find_inode_in_references_by_name(parent, name);
 
@@ -407,11 +427,12 @@ impl Filesystem for Rb_fs {
 
                 reply.ok();
             },
-            None => reply.error(EIO) // "Input/output error."
+            None => reply.error(EIO) 
         }
     }
     //Devuelve las estadistcas del filesystem *no funciona bien XD
     fn statfs(&mut self, _req: &Request, _ino: u64, reply: ReplyStatfs) {
+        println!("----RB-FS: STATFS----");
 
         let mut blocks:u64 = 0;
         let mut files:u64 = self.disk.super_block.len().try_into().unwrap();
@@ -426,25 +447,18 @@ impl Filesystem for Rb_fs {
         reply.statfs(blocks,0,0,files,2222 as u64,bsize,namelen,0);
     }
 
+    //Si datasync != 0, solo se deben vaciar los datos del usuario, no los metadatos.
     fn fsync(&mut self, _req: &Request, ino: u64, fh: u64, datasync: bool, reply: ReplyEmpty) { 
+        println!("----RB-FS: FSYNC----");
+
         reply.error(ENOSYS);
     }
+
+    //Revisa el acceso de los permisos
     fn access(&mut self, _req: &Request, _ino: u64, _mask: u32, reply: ReplyEmpty) {
-        print!("Hola carepichassssssssssssssssssssssssssss\n");
+        println!("----RB-FS: ACCESS----");
+
+        reply.ok();
     }
 
 }
-
-fn print_references(array:&Vec<usize>){
-    for i in array {
-        print!("{}",i);
-    }
-}
-
-fn print_array(array:&Vec<Inode>){
-    for i in array {
-        print!("{}\n",i.attributes.ino);
-    }
-}
-
-
