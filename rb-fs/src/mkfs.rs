@@ -2,14 +2,20 @@ use fuse::{Filesystem, Request, ReplyCreate, ReplyEmpty, ReplyAttr, ReplyEntry, 
 use libc::{ENOSYS, ENOENT, EIO, EISDIR, ENOSPC};
 use std::ffi::OsStr;
 use std::mem;
+use crate::mkfs;
+use serde::{Serialize, Deserialize};
+use crate::ses_infor::FileAttrDef;
+use qrcode_generator::QrCodeEcc;
 
 //---------------------------------------CODIGO DEL ALMACENAJE DE NUESTRO FS---------------------------------------
 //LLevaremos un control de los inodes 
 static mut NEXT_INO: u64 = 1;
 
 //Los Inodes son la unidad que movera nuestro fs
+#[derive(Serialize, Deserialize)]
 pub struct Inode {
     pub name: String,
+    #[serde(with = "FileAttrDef")]
     pub attributes : FileAttr,
     pub references: Vec<usize>
 }
@@ -31,6 +37,7 @@ impl Inode {
 
 
 //Se guarda el contenido de cada iNode creado
+#[derive(Serialize, Deserialize)]
 pub struct Mem_block {
     ino_ref : u64,
     data : Vec<u8>
@@ -48,6 +55,7 @@ impl Mem_block {
 //Creamos una estructura para guardar nuestros archivos Inodes
 //El super bloque contiene los inodes del sistema
 //tambien la memoria de cada inote
+#[derive(Serialize, Deserialize)]//Con esto podemos guardar el so
 pub struct Disk {
     super_block : Vec<Inode>,
     memory_block : Vec<Mem_block>,
@@ -219,8 +227,27 @@ impl Rb_fs {
             disk : new_disk
         }
     }
+
+    pub fn get_disk(&self) -> &Disk {
+        return &self.disk;
+    }
+
+    pub fn set_disk(&mut self,new_disk:Disk) {
+        self.disk = new_disk;
+    }
+
+    pub fn save_fs(&self){
+        let encode_fs = encode(&self.disk);
+        save_to_qr(encode_fs);
+    }
 }
 
+impl Drop for Rb_fs {
+    fn drop(&mut self) {
+        &self.save_fs();
+        println!("---RB-FS SAVED---!");
+    }
+}
 
 impl Filesystem for Rb_fs {
 
@@ -460,5 +487,23 @@ impl Filesystem for Rb_fs {
 
         reply.ok();
     }
+    
+
 
 }
+
+//-------------------------------ACA EMPIEZA EL CODIGO DE SALVAR EL DISCO Y QR------------------------------
+
+pub fn encode(object: &Disk) -> Vec<u8> {
+    return bincode::serialize(object).unwrap();
+}
+
+pub fn decode(object: &Vec<u8>) -> Disk {
+    let decoded: Disk = bincode::deserialize(&object[..]).unwrap();
+    return decoded;
+}
+
+pub fn save_to_qr(encode_disk:Vec<u8>) {
+    qrcode_generator::to_png_to_file(encode_disk, QrCodeEcc::Low, 1024, "disk_memories/disk.png").unwrap();
+}
+

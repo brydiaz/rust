@@ -1,10 +1,12 @@
 mod mkfs;
-
+mod ses_infor;
 use std::env;
 use std::ffi::OsStr;
 
 
 fn main() {
+
+    
     let mountpoint = match env::args().nth(1) {
         Some(path) => path,
         None => {
@@ -14,6 +16,8 @@ fn main() {
     };
     let fs = mkfs::Rb_fs::new(mountpoint.clone());
 
+    
+   
     let options = ["-o", "nonempty"]
         .iter()
         .map(|o| o.as_ref())
@@ -22,4 +26,6 @@ fn main() {
     println!("RB-FS started!");
 
     fuse::mount(fs, &mountpoint, &options).unwrap();
+
+
 }
