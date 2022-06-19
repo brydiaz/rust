@@ -2,6 +2,8 @@ mod mkfs;
 mod ses_infor;
 use std::env;
 use std::ffi::OsStr;
+use image;
+use quircs;
 
 
 fn main() {
@@ -16,16 +18,21 @@ fn main() {
     };
     let fs = mkfs::Rb_fs::new(mountpoint.clone());
 
-    
-   
     let options = ["-o", "nonempty"]
         .iter()
         .map(|o| o.as_ref())
         .collect::<Vec<&OsStr>>();
 
     println!("RB-FS started!");
-
     fuse::mount(fs, &mountpoint, &options).unwrap();
 
 
+
+    
 }
+
+// Prepare for detection
+
+
+
+

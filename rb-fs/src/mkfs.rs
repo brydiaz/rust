@@ -5,7 +5,8 @@ use std::mem;
 use crate::mkfs;
 use serde::{Serialize, Deserialize};
 use crate::ses_infor::FileAttrDef;
-use qrcode_generator::QrCodeEcc;
+use qrcode::QrCode;
+use image::Luma;
 
 //---------------------------------------CODIGO DEL ALMACENAJE DE NUESTRO FS---------------------------------------
 
@@ -223,6 +224,7 @@ pub struct Rb_fs {
 }
 impl Rb_fs {
     pub fn new(root_path:String) -> Self{
+        //Falta verificar si hay que agregar crear un nuevo disco o cargarlo, las funciones ya estan
         let new_disk = Disk::new(root_path.to_string());
         Rb_fs {
             disk : new_disk
@@ -240,6 +242,33 @@ impl Rb_fs {
     pub fn save_fs(&self){
         let encode_fs = encode(&self.disk);
         save_to_qr(encode_fs);
+    }
+    pub fn load_fs(&mut self, path : String) {
+        // Carga la base pasada por parametro
+        let img = image::open("disk_memories/qrdiskcode.png").unwrap();
+        let img_gray = img.into_luma(); //La pasa a grises
+
+        //Crea el decodificador
+        let mut decoder = quircs::Quirc::default();
+
+        // Busca todos los codigos qr
+        let codes = decoder.identify(img_gray.width() as usize, img_gray.height() as usize, &img_gray);
+        let mut vec_decode: Option<Vec<u8>> = None;
+        for code in codes {
+            let code = code.expect("----RB-FS ERROR AL EXTRAER QR-----------");
+            let decoded = code.decode().expect("----RB-FS ERROR AL DECODIFICAR-------");
+            vec_decode = Some(decoded.payload);
+        }
+        match vec_decode {
+            Some(vec_decode) => {
+                let disk_to_load:mkfs::Disk = mkfs::decode(vec_decode);
+                //Aca se carga el disc al fs
+                println!("----RB-FS DISCO CARGADO---------");
+            },
+            None => {
+                println!("------- ERROR AL CARGAR EL DISCO --------");
+            }
+        }
     }
 }
 
@@ -495,16 +524,24 @@ impl Filesystem for Rb_fs {
 
 //-------------------------------ACA EMPIEZA EL CODIGO DE SALVAR EL DISCO Y QR------------------------------
 
+//Transforma el disco a bits
 pub fn encode(object: &Disk) -> Vec<u8> {
-    return bincode::serialize(object).unwrap();
+    let enc = bincode::serialize(object).unwrap();
+    return enc;
 }
-
-pub fn decode(object: &Vec<u8>) -> Disk {
+//Decodifica un arreglo de bits y devuelve un Disk
+pub fn decode(object: Vec<u8>) -> Disk {
     let decoded: Disk = bincode::deserialize(&object[..]).unwrap();
     return decoded;
 }
-
+//Guarda un arreglo de bits a una imagen de codigo QR
 pub fn save_to_qr(encode_disk:Vec<u8>) {
-    qrcode_generator::to_png_to_file(encode_disk, QrCodeEcc::Low, 1024, "disk_memories/disk.png").unwrap();
+    let code = QrCode::new(encode_disk).unwrap();
+
+    // Render the bits into an image.
+    let image = code.render::<Luma<u8>>().build();
+
+    // Save the image.
+    image.save("disk_memories/qrdiskcode.png").unwrap();
 }
 
