@@ -8,8 +8,7 @@ use crate::ses_infor::FileAttrDef;
 use qrcode_generator::QrCodeEcc;
 
 //---------------------------------------CODIGO DEL ALMACENAJE DE NUESTRO FS---------------------------------------
-//LLevaremos un control de los inodes 
-static mut NEXT_INO: u64 = 1;
+
 
 //Los Inodes son la unidad que movera nuestro fs
 #[derive(Serialize, Deserialize)]
@@ -57,6 +56,7 @@ impl Mem_block {
 //tambien la memoria de cada inote
 #[derive(Serialize, Deserialize)]//Con esto podemos guardar el so
 pub struct Disk {
+    NEXT_INO: u64,
     super_block : Vec<Inode>,
     memory_block : Vec<Mem_block>,
     pub root_path: String
@@ -69,7 +69,7 @@ impl Disk {
             let mut blocks = Vec::new(); //Aca guardamos los inodes
             let ts = time::now().to_timespec();
             let attr = FileAttr {
-                ino: NEXT_INO,
+                ino: 1,
                 size: 0,
                 blocks: 0,
                 atime: ts,
@@ -93,6 +93,7 @@ impl Disk {
             
             blocks.push(initial_node);
             Disk {
+                NEXT_INO : 1 as u64,
                 super_block : blocks,
                 memory_block : mem_block,
                 root_path :  path
@@ -101,10 +102,10 @@ impl Disk {
         
     }
     //Retorna el siguiente ino disponible
-    pub fn new_ino(&self) -> u64{
+    pub fn new_ino(&mut self) -> u64{
         unsafe{
-            NEXT_INO = NEXT_INO +1;
-            return NEXT_INO;
+            self.NEXT_INO = self.NEXT_INO +1;
+            return self.NEXT_INO;
         }
         
     }
