@@ -64,7 +64,9 @@ pub struct Disk {
 }
 impl Disk {
     //Crea un nuevo disco y crea el inode raiz
-    pub fn new(path:String) -> Disk{
+    pub fn new(path:String, disk_path:String) -> Disk{
+        
+        println!("-----CREATING DISK------");
         unsafe{
             let mut mem_block = Vec::new();
             let mut blocks = Vec::new(); //Aca guardamos los inodes
@@ -93,14 +95,26 @@ impl Disk {
             };
             
             blocks.push(initial_node);
-            Disk {
-                NEXT_INO : 1 as u64,
-                super_block : blocks,
-                memory_block : mem_block,
-                root_path :  path
+            
+            let new_disk = Disk {NEXT_INO : 1 as u64, super_block : blocks, memory_block : mem_block,root_path :  path};
+            if validate_path(disk_path.clone()) {
+                println!("------WE FOUND A DISK TO LOAD------");
+                let disk_to_load = load_fs(disk_path);
+                match disk_to_load {
+                    Some(disk_to_load) => {
+                        return disk_to_load;
+                    },
+                    None => {
+                        println!("------CRETING NEW DISK---------");
+                        return new_disk;
+                    }
+                }
             }
-        }
+            println!("-----CRETING NEW DISK--------");
+            return new_disk;
+            
         
+        }         
     }
     //Retorna el siguiente ino disponible
     pub fn new_ino(&mut self) -> u64{
@@ -223,9 +237,9 @@ pub struct Rb_fs {
     disk : Disk
 }
 impl Rb_fs {
-    pub fn new(root_path:String) -> Self{
+    pub fn new(root_path:String, disk_path:String) -> Self{
         //Falta verificar si hay que agregar crear un nuevo disco o cargarlo, las funciones ya estan
-        let new_disk = Disk::new(root_path.to_string());
+        let new_disk = Disk::new(root_path.to_string(), disk_path);
         Rb_fs {
             disk : new_disk
         }
@@ -243,33 +257,7 @@ impl Rb_fs {
         let encode_fs = encode(&self.disk);
         save_to_qr(encode_fs);
     }
-    pub fn load_fs(&mut self, path : String) {
-        // Carga la base pasada por parametro
-        let img = image::open("disk_memories/qrdiskcode.png").unwrap();
-        let img_gray = img.into_luma(); //La pasa a grises
-
-        //Crea el decodificador
-        let mut decoder = quircs::Quirc::default();
-
-        // Busca todos los codigos qr
-        let codes = decoder.identify(img_gray.width() as usize, img_gray.height() as usize, &img_gray);
-        let mut vec_decode: Option<Vec<u8>> = None;
-        for code in codes {
-            let code = code.expect("----RB-FS ERROR AL EXTRAER QR-----------");
-            let decoded = code.decode().expect("----RB-FS ERROR AL DECODIFICAR-------");
-            vec_decode = Some(decoded.payload);
-        }
-        match vec_decode {
-            Some(vec_decode) => {
-                let disk_to_load:mkfs::Disk = mkfs::decode(vec_decode);
-                //Aca se carga el disc al fs
-                println!("----RB-FS DISCO CARGADO---------");
-            },
-            None => {
-                println!("------- ERROR AL CARGAR EL DISCO --------");
-            }
-        }
-    }
+    
 }
 
 impl Drop for Rb_fs {
@@ -545,3 +533,44 @@ pub fn save_to_qr(encode_disk:Vec<u8>) {
     image.save("disk_memories/qrdiskcode.png").unwrap();
 }
 
+pub fn validate_path(path:String) -> bool{
+    let img = image::open(path);
+    match img {
+        Ok(img) => {
+            return true;
+        },
+        Err(img) => {
+            return false;
+        }
+    }
+}
+
+pub fn load_fs(path : String) -> Option<Disk>{
+    // Carga la base pasada por parametro
+    let img = image::open("disk_memories/qrdiskcode.png").unwrap();
+    let img_gray = img.into_luma(); //La pasa a grises
+
+    //Crea el decodificador
+    let mut decoder = quircs::Quirc::default();
+
+    // Busca todos los codigos qr
+    let codes = decoder.identify(img_gray.width() as usize, img_gray.height() as usize, &img_gray);
+    let mut vec_decode: Option<Vec<u8>> = None;
+    for code in codes {
+        let code = code.expect("----RB-FS ERROR AL EXTRAER QR-----------");
+        let decoded = code.decode().expect("----RB-FS ERROR AL DECODIFICAR-------");
+        vec_decode = Some(decoded.payload);
+    }
+    match vec_decode {
+        Some(vec_decode) => {
+            let disk_to_load:Disk = decode(vec_decode);
+            //Aca se carga el disc al fs
+            println!("----RB-FS DISCO CARGADO---------");
+            return Some(disk_to_load);
+        },
+        None => {
+            println!("------- ERROR AL CARGAR EL DISCO --------");
+            return None;
+        }
+    }
+}

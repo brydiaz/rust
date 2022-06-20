@@ -8,26 +8,12 @@ use quircs;
 
 fn main() {
 
-    
-    let mountpoint = match env::args().nth(1) {
-        Some(path) => path,
-        None => {
-            println!("Usage: {} <MOUNTPOINT>", env::args().nth(0).unwrap());
-            return;
-        }
-    };
-    let fs = mkfs::Rb_fs::new(mountpoint.clone());
-
-    let options = ["-o", "nonempty"]
-        .iter()
-        .map(|o| o.as_ref())
-        .collect::<Vec<&OsStr>>();
-
+    let mountpoint = env::args().nth(2).unwrap();
+    let disk_direction = env::args().nth(1).unwrap();
+    let fs = mkfs::Rb_fs::new(mountpoint.clone(), disk_direction.clone());
+    let options = ["-o", "nonempty"].iter().map(|o| o.as_ref()).collect::<Vec<&OsStr>>();
     println!("RB-FS started!");
     fuse::mount(fs, &mountpoint, &options).unwrap();
-
-
-
     
 }
 
