@@ -362,6 +362,26 @@ impl Filesystem for Rb_fs {
             None => {reply.error(EIO);}
         }
     }
+    //Funcion para cambiar de nombre un archivo mediante el padre
+    fn rename(&mut self, _req:&Request, parent:u64, name:&OsStr, _newparent: u64, newname:&OsStr, reply:ReplyEmpty) {
+        let name = name.to_str().unwrap();
+        let inode :Option<&Inode> = self.disk.find_inode_in_references_by_name(parent, name);
+        match inode {
+            Some(inode) => {
+                let ino = inode.attributes.ino;
+                let child = self.disk.get_mut_inode(ino);
+                match child {
+                    Some(child) => {
+                        println!("----RB-FS: RENAME----");
+                        child.name = newname.to_str().unwrap().to_string();
+                        reply.ok()
+                    },
+                    None => {println!("-------RENAME ERROR-------------");}
+                }
+            },
+            None =>{reply.error(ENOENT);}
+        }
+    }
     //Busca el inode asignado al ino y devuelve sus atributos
     fn getattr(&mut self,_req: &Request, ino: u64, reply: ReplyAttr) {
         let inode = self.disk.get_inode(ino);
