@@ -499,30 +499,46 @@ impl Filesystem for Rb_fs {
     fn statfs(&mut self, _req: &Request, _ino: u64, reply: ReplyStatfs) {
         println!("----RB-FS: STATFS----");
 
-        let mut blocks:u64 = 0;
-        let mut files:u64 = self.disk.super_block.len().try_into().unwrap();
-        let mut bsize:u32 = 0;
-        let mut namelen:u32 = 0;
-    
-        for i in 0..self.disk.super_block.len() {
-            blocks += self.disk.super_block[i].attributes.blocks as u64;
-            bsize += self.disk.super_block[i].attributes.size as u32;
-            namelen += self.disk.super_block[i].name.len() as u32;
-        }
-        reply.statfs(blocks,0,0,files,2222 as u64,bsize,namelen,0);
+        let mut blocks:u64 =  (self.disk.super_block.len() +self.disk.memory_block.len()) as u64;
+        let mut bfree:u64 = blocks - self.disk.memory_block.len() as u64;
+        let mut bavail:u64 = bfree;
+        let mut files:u64 = self.disk.memory_block.len().try_into().unwrap();
+        let mut ffree:u64 = 1024 as u64;
+        let mut bsize:u32 = (mem::size_of::<Vec<Inode>>() as u32 +mem::size_of::<Inode>() as u32)*1024;
+        let mut namelen:u32 = 77;
+        let mut frsize:u32 = 1;
+
+        reply.statfs(blocks,
+        bfree,
+        bavail,
+        files,
+        ffree,
+        bsize,
+        namelen,
+        frsize);
     }
 
     //Si datasync != 0, solo se deben vaciar los datos del usuario, no los metadatos.
     fn fsync(&mut self, _req: &Request, ino: u64, fh: u64, datasync: bool, reply: ReplyEmpty) { 
         println!("----RB-FS: FSYNC----");
-
         reply.error(ENOSYS);
+    }
+    //Abre un directorio
+    fn opendir(&mut self, _req: &Request, _ino: u64, _flags: u32, reply: ReplyOpen) { 
+        let dir = self.disk.get_inode(_ino);
+        match dir {
+            Some(dir) => {
+                println!("----RB-FS OPENDIR----");
+                reply.opened(dir.attributes.ino, 1 as u32);
+            },
+            None => {println!("-------CANT OPEN-------")}
+        }
+
     }
 
     //Revisa el acceso de los permisos
     fn access(&mut self, _req: &Request, _ino: u64, _mask: u32, reply: ReplyEmpty) {
         println!("----RB-FS: ACCESS----");
-
         reply.ok();
     }
     
