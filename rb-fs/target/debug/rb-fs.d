@@ -1,1 +1,1 @@
-/home/bryan/rust/rb-fs/target/debug/rb-fs: /home/bryan/rust/rb-fs/src/main.rs /home/bryan/rust/rb-fs/src/mkfs.rs /home/bryan/rust/rb-fs/src/ses_infor.rs
+/home/bryan/rust/rb-fs/target/debug/rb-fs: /home/bryan/rust/rb-fs/src/fsck.rs /home/bryan/rust/rb-fs/src/main.rs /home/bryan/rust/rb-fs/src/mkfs.rs /home/bryan/rust/rb-fs/src/mount.rs /home/bryan/rust/rb-fs/src/ses_infor.rs

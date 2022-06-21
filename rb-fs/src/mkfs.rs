@@ -58,8 +58,8 @@ impl Mem_block {
 #[derive(Serialize, Deserialize)]//Con esto podemos guardar el so
 pub struct Disk {
     NEXT_INO: u64,
-    super_block : Vec<Inode>,
-    memory_block : Vec<Mem_block>,
+    pub super_block : Vec<Inode>,
+    pub memory_block : Vec<Mem_block>,
     pub root_path: String
 }
 impl Disk {
