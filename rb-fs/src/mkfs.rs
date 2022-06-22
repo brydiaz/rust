@@ -551,6 +551,7 @@ impl Filesystem for Rb_fs {
 //Transforma el disco a bits
 pub fn encode(object: &Disk) -> Vec<u8> {
     let enc = bincode::serialize(object).unwrap();
+    println!("{:?}", enc);
     return enc;
 }
 //Decodifica un arreglo de bits y devuelve un Disk
@@ -583,7 +584,7 @@ pub fn validate_path(path:String) -> bool{
 
 pub fn load_fs(path : String) -> Option<Disk>{
     // Carga la base pasada por parametro
-    let img = image::open("disk_memories/qrdiskcode.png").unwrap();
+    let img = image::open(path).unwrap();
     let img_gray = img.into_luma(); //La pasa a grises
 
     //Crea el decodificador
