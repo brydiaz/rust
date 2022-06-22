@@ -60,11 +60,12 @@ pub struct Disk {
     NEXT_INO: u64,
     pub super_block : Vec<Inode>,
     pub memory_block : Vec<Mem_block>,
-    pub root_path: String
+    pub root_path: String,
+    pub path_save: String
 }
 impl Disk {
     //Crea un nuevo disco y crea el inode raiz
-    pub fn new(path:String, disk_path:String) -> Disk{
+    pub fn new(path:String, disk_path:String, path_to_save:String) -> Disk{
         
         println!("-----CREATING DISK------");
         unsafe{
@@ -96,7 +97,7 @@ impl Disk {
             
             blocks.push(initial_node);
             
-            let new_disk = Disk {NEXT_INO : 1 as u64, super_block : blocks, memory_block : mem_block,root_path :  path};
+            let new_disk = Disk {NEXT_INO : 1 as u64, super_block : blocks, memory_block : mem_block,root_path :  path, path_save:path_to_save};
             if validate_path(disk_path.clone()) {
                 println!("------WE FOUND A DISK TO LOAD------");
                 let disk_to_load = load_fs(disk_path);
@@ -237,9 +238,9 @@ pub struct Rb_fs {
     disk : Disk
 }
 impl Rb_fs {
-    pub fn new(root_path:String, disk_path:String) -> Self{
+    pub fn new(root_path:String, disk_path:String, path_save:String) -> Self{
         //Falta verificar si hay que agregar crear un nuevo disco o cargarlo, las funciones ya estan
-        let new_disk = Disk::new(root_path.to_string(), disk_path);
+        let new_disk = Disk::new(root_path.to_string(), disk_path, path_save);
         Rb_fs {
             disk : new_disk
         }
@@ -255,7 +256,7 @@ impl Rb_fs {
 
     pub fn save_fs(&self){
         let encode_fs = encode(&self.disk);
-        save_to_qr(encode_fs);
+        save_to_qr(self.disk.path_save.clone(),encode_fs);
     }
     
 }
@@ -560,14 +561,15 @@ pub fn decode(object: Vec<u8>) -> Disk {
     return decoded;
 }
 //Guarda un arreglo de bits a una imagen de codigo QR
-pub fn save_to_qr(encode_disk:Vec<u8>) {
+pub fn save_to_qr(path:String,encode_disk:Vec<u8>) {
     let code = QrCode::new(encode_disk).unwrap();
 
     // Render the bits into an image.
     let image = code.render::<Luma<u8>>().build();
 
     // Save the image.
-    image.save("disk_memories/qrdiskcode.png").unwrap();
+    println!("{:?}", path);
+    image.save(path).unwrap();
 }
 
 pub fn validate_path(path:String) -> bool{
